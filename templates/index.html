@@ -1,0 +1,178 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+  <title>Prediksi Harga iPhone</title>
+</head>
+<body>
+  <h1>Prediksi Harga iPhone</h1>
+  <form action="/predict" method="post">
+    Model: <input type="text" name="model"><br>
+    Warna: <input type="text" name="warna"><br>
+    Kapasitas (GB): <input type="number" name="kapasitas"><br>
+    Lokasi: <input type="text" name="lokasi"><br>
+    Jumlah Terjual: <input type="number" name="jumlah"><br><br>
+    <input type="submit" value="Prediksi Harga">
+  </form>
+
+  {% if prediction %}
+    <h3>{{ prediction }}</h3>
+  {% endif %}
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Analisis & Prediksi Pasar iPhone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Background gradien hitam ke hijau gelap */
+            background: linear-gradient(135deg, #1f2937 0%, #115e59 100%);
+            min-height: 100vh;
+        }
+        .container-card {
+            background-color: #1f2937; /* Dark background for main card */
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table th, .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #374151; /* Dark border */
+        }
+        .table th {
+            background-color: #0f766e; /* Dark teal */
+            color: #f0fdfa;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .table tr {
+            background-color: #111827; /* Very dark background */
+            color: #d1d5db; /* Light gray text */
+        }
+        .table tr:nth-child(even) {
+            background-color: #1f2937;
+        }
+        .table tr:hover {
+            background-color: #0f766e; /* Hover effect */
+            color: white;
+        }
+        /* Custom Gold/Orange Accent */
+        .accent-gold {
+            color: #fbbf24; /* Amber-400 */
+        }
+        .border-accent-gold {
+            border-color: #fbbf24;
+        }
+        .bg-teal-gradient {
+            background: linear-gradient(90deg, #0d9488 0%, #14b8a6 100%);
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-6xl mx-auto container-card shadow-2xl rounded-xl p-6 sm:p-10">
+        <h1 class="text-4xl font-extrabold text-white mb-8 border-b-2 border-accent-gold pb-2">
+            Dashboard Prediksi & Analisis Pasar iPhone
+        </h1>
+
+        <!-- Form Pemilihan Lokasi -->
+        <form method="POST" class="bg-gray-800 p-6 rounded-lg shadow-xl mb-8 flex flex-col sm:flex-row gap-4 items-center border border-gray-700">
+            <label for="lokasi" class="font-semibold text-gray-200 w-full sm:w-auto">Pilih Lokasi Toko:</label>
+            <select name="lokasi" id="lokasi" class="p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-teal-500 focus:border-teal-500 w-full sm:w-1/2 shadow-inner">
+                {% for lokasi in lokasis %}
+                    <option value="{{ lokasi }}" {% if lokasi == lokasi_terpilih %}selected{% endif %}>{{ lokasi }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="bg-teal-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300 w-full sm:w-auto">
+                Tampilkan Analisis
+            </button>
+        </form>
+
+        <!-- Akurasi Model & Analisis Global -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Box Akurasi -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl border-t-4 border-teal-500">
+                <h3 class="text-xl font-bold text-teal-300 mb-3">Akurasi Model Prediksi</h3>
+                <p class="text-gray-300">Linear Regression: <span class="text-2xl font-extrabold accent-gold">{{ "%.2f"|format(akurasi_lr) }}%</span></p>
+                <p class="text-gray-300">Random Forest: <span class="text-2xl font-extrabold accent-gold">{{ "%.2f"|format(akurasi_rf) }}%</span></p>
+                <p class="text-xs text-gray-500 mt-3">
+                    {% if info_data_check %}
+                        * {{ info_data_check }}
+                    {% else %}
+                        * Model sangat akurat karena harga eceran cenderung stabil berdasarkan fitur produk.
+                    {% endif %}
+                </p>
+            </div>
+            
+            {% if top_selling_info %}
+            <!-- Analisis Global -->
+            <div class="md:col-span-2 bg-gray-900 p-6 rounded-lg shadow-xl border-t-4 border-accent-gold">
+                <h3 class="text-xl font-bold accent-gold mb-2">🌟 Analisis Model Terlaris (Global)</h3>
+                <pre class="text-gray-300 whitespace-pre-wrap text-sm">{{ top_selling_info }}</pre>
+                <p class="text-xs text-gray-500 mt-2">Model terlaris adalah "model paling bagus" dari sudut pandang pasar secara keseluruhan.</p>
+            </div>
+            {% endif %}
+
+        </div>
+
+        {% if lokasi_terpilih %}
+        <h2 class="text-3xl font-bold text-teal-400 mt-8 mb-4">Analisis Lokasi: {{ lokasi_terpilih }}</h2>
+        
+        <!-- Hasil Prediksi -->
+        <div class="bg-gray-900 p-6 rounded-lg shadow-xl border-t-4 border-accent-gold mb-8">
+            <h3 class="text-xl font-bold accent-gold mb-2">💰 Prediksi Harga Produk Paling Diminati</h3>
+            <p class="text-gray-300">Harga Prediksi (Random Forest) untuk Produk Terpopuler:</p>
+            <p class="text-5xl font-extrabold text-yellow-300 mt-2">
+                <!-- PEMFORMATAN RUPIAH YANG BENAR -->
+                Rp{{ "{:,.0f}".format(prediksi|float) }}
+            </p>
+            <p class="text-sm text-gray-500 mt-2">*Harga diprediksi untuk Model, Warna, dan Kapasitas paling banyak terjual di lokasi ini.</p>
+        </div>
+
+        <!-- Grafik dan Tabel -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-xl font-semibold text-teal-400 mb-3">Grafik Popularitas Model</h3>
+                {% if img_base64 %}
+                    <div class="bg-gray-900 p-4 rounded-lg shadow-xl border border-gray-700">
+                        <img src="data:image/png;base64,{{ img_base64 }}" alt="Grafik Popularitas Model" class="w-full h-auto rounded-lg">
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div>
+                <h3 class="text-xl font-semibold text-teal-400 mb-3">Tabel Popularitas Produk</h3>
+                {% if table_html %}
+                    <div class="table-container bg-gray-900 rounded-lg shadow-xl border border-gray-700">
+                        {{ table_html|safe }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Tampilan Awal (Grafik Global) -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-bold text-teal-400 mt-8 mb-4">Grafik Popularitas Model Global</h2>
+            <div class="bg-gray-900 p-6 rounded-lg shadow-xl border border-gray-700 max-w-2xl mx-auto">
+                {% if img_base64 %}
+                    <img src="data:image/png;base64,{{ img_base64 }}" alt="Grafik Popularitas Model Global" class="w-full h-auto rounded-lg">
+                {% endif %}
+                <p class="text-sm text-gray-500 text-center mt-4">Pilih lokasi di atas untuk memulai analisis spesifik kota.</p>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</body>
+</html>
