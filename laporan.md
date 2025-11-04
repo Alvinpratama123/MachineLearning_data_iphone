@@ -1,115 +1,83 @@
-## Laporan Ujian Tengah Semester (UTS) - Analisis dan Prediksi Harga iPhone
+## Draf Laporan Ujian Tengah Semester (UTS)
 
-## Judul Proyek
+## Judul: Analisis Komparatif Model Supervised dan Unsupervised Learning dalam Segmentasi dan Prediksi Harga Produk Elektronik
 
-Sistem Analisis Penjualan dan Prediksi Harga iPhone Menggunakan Machine Learning Berbasis Regresi
+## I. Pendahuluan
 
-## 1. Tujuan Penelitian / Program
+Latar Belakang: Jelaskan bahwa Anda menggunakan dataset penjualan iPhone untuk memahami dinamika pasar di berbagai lokasi toko.
 
-Tujuan utama dari program ini adalah untuk menyediakan dashboard interaktif berbasis web (Flask) yang dapat membantu pemilik toko atau analis pasar dalam membuat keputusan inventaris dan penetapan harga.
+Tujuan Proyek: Mengimplementasikan dua jenis Machine Learning (ML) untuk mendapatkan wawasan bisnis ganda:
 
-## Secara spesifik, program ini bertujuan untuk:
+Memprediksi harga jual (menggunakan Supervised Learning).
 
-Analisis Pasar Lokal: Mengidentifikasi model iPhone mana yang paling diminati (paling banyak terjual) di lokasi toko tertentu.
+Mengelompokkan produk berdasarkan nilai untuk segmentasi pasar (menggunakan Unsupervised Learning).
 
-Prediksi Harga: Memprediksi harga jual eceran suatu produk (berdasarkan model, warna, dan kapasitas) menggunakan model Machine Learning yang dilatih secara lokal.
+## II. Metodologi (Komparasi Model ML)
 
-Evaluasi Kinerja Model: Membandingkan kinerja dua metode regresi (Linear Regression dan Random Forest) untuk menentukan model mana yang paling efisien dalam memprediksi harga per kota.
+Jelaskan model yang Anda gunakan dan metrik perbandingannya:
 
-## 2. Metode Machine Learning yang Digunakan
+Jenis ML
 
-Program ini menggunakan dua algoritma utama dari kategori Supervised Learning dengan tipe Regresi (karena targetnya adalah memprediksi nilai numerik, yaitu Harga).
+Model Digunakan
 
-## A. Algoritma Regresi yang Digunakan
+Tujuan Bisnis
 
-Algoritma
+Metrik Kinerja
 
-Kategori
-
-Kelebihan dalam Konteks Ini
-
-## 1. Regresi Linier (Linear Regression)
+Interpretasi Metrik
 
 Supervised Learning
 
-Sederhana, cepat dilatih, dan mudah diinterpretasikan. Baik untuk memodelkan hubungan harga yang stabil dan linier.
+Linear Regression (LR)
 
-## 2. Random Forest Regressor
+Prediksi harga spesifik produk terlaris.
 
-Supervised Learning (Ensemble)
+$R^2$ Score (dalam %)
 
-Model yang kuat, dapat menangani hubungan non-linier dan data dengan kompleksitas tinggi. Cenderung memberikan akurasi yang lebih stabil. 
+Mengukur keandalan prediksi (seberapa akurat harga prediksi mendekati harga aktual). Nilai tinggi (mendekati 100%) menunjukkan model handal untuk penetapan harga.
 
-## B. Metrik Evaluasi
+Unsupervised Learning
 
-Kinerja model diukur menggunakan $R^2$ Score (Coefficient of Determination).
+K-Means Clustering
 
-Tujuan $R^2$ Score: Mengukur seberapa baik model dapat mereplikasi data hasil observasi. Nilai yang mendekati 1 (atau 100%) menunjukkan bahwa model dapat menjelaskan hampir semua variabilitas harga.
+Segmentasi produk ke dalam klaster harga (Low, Mid, High Value).
 
-## 3. Data yang Dipakai dan Preprocessing
+Silhouette Score (Skor 0 hingga 1)
 
-## A. Data Awal (Dataset)
+Mengukur kualitas klasterisasi. Nilai mendekati 1 menunjukkan klaster sangat padat dan terpisah dengan baik, menandakan segmentasi pasar yang jelas.
 
-Nama File: data_penjualan_iphone_1000.xlsx
+## III. Implementasi dan Analisis Hasil
 
-Jumlah Data: 1000 baris data (setelah proses cleaning).
+Pre-processing Data:
 
-Fitur (Variabel Input) yang Digunakan:
+Sebutkan bahwa Anda melakukan Label Encoding pada fitur non-numerik (Model, Warna) karena Linear Regression dan K-Means memerlukan input numerik.
 
-Model: Nama model iPhone (misalnya, iPhone 11, iPhone 14 Pro Max).
+Hasil Linear Regression (LR):
 
-Warna: Varian warna (misalnya, Hitam, Merah, Ungu).
+Sajikan hasil $R^2$ Score dari dashboard Anda (Contoh: "Akurasi rata-rata di berbagai kota adalah 99%.").
 
-Kapasitas (GB): Ukuran memori.
+Wawasan: Jelaskan bahwa akurasi yang sangat tinggi mungkin disebabkan oleh harga eceran produk yang stabil. Hasil ini sangat berguna untuk Prediksi Harga Ideal (seperti yang terlihat di Canvas Anda).
 
-Lokasi Toko: Kota tempat penjualan terjadi (digunakan untuk filtering).
+Hasil K-Means Clustering:
 
-Target (Variabel Output):
+Sajikan hasil Silhouette Score (Contoh: "Silhouette Score rata-rata adalah 0.85").
 
-Harga (Rp): Nilai numerik harga jual eceran.
+Wawasan: Jelaskan hasil klasterisasi per lokasi. Fokus pada Klaster yang memiliki produk terbanyak (Misal: "Di lokasi A, klaster Low-Value mendominasi, menandakan pasar sensitif harga"). Ini sangat berguna untuk Strategi Inventaris dan Pemasaran.
 
-## B. Tahap Pra-pemrosesan Data (Preprocessing)
+## IV. Kesimpulan dan Saran
 
-Program ini menerapkan tiga langkah krusial sebelum pelatihan:
+Kesimpulan Komparatif:
 
-Data Cleaning (Pembersihan Data):
+Model Linear Regression berhasil menyediakan alat untuk Pengambilan Keputusan Taktis (menentukan harga jual).
 
-Menggunakan fungsi df_full.drop_duplicates(inplace=True) untuk menghapus setiap baris data yang identik, memastikan integritas dan menghindari bias pelatihan.
+Model K-Means berhasil memberikan alat untuk Analisis Strategis (memahami segmen dan struktur pasar).
 
-## Feature Encoding:
+Penekanan: Kedua model, meski berbeda jenis, memberikan nilai tambah yang unik dan saling melengkapi dalam wawasan bisnis.
 
-Menggunakan LabelEncoder() dari Scikit-learn untuk mengubah variabel kategori (Model, Warna, Lokasi Toko) menjadi nilai numerik (Model_enc, Warna_enc, Lokasi_enc). Langkah ini wajib karena algoritma ML hanya bekerja dengan angka.
+Saran Pengembangan Lanjut:
 
-## Pembagian Data:
+Menggunakan model Regresi yang lebih kompleks (seperti Random Forest Regressor) jika $R^2$ Score Linear Regression tidak memuaskan.
 
-Data dibagi 80% untuk pelatihan (X_train, y_train) dan 20% untuk pengujian (X_test, y_test) menggunakan train_test_split.
+Menggunakan teknik elbow method untuk menentukan nilai $K$ yang optimal pada K-Means, bukan menetapkan $K=3$ secara statis.
 
-## 4. Pembahasan Hasil dan Kinerja
-
-## A. Kinerja Akurasi yang Sangat Tinggi
-
-Akurasi kedua model (sekitar 99.5% - 99.9%) hampir sempurna.
-
-Interpretasi: Akurasi tinggi ini menunjukkan bahwa harga eceran iPhone sangat stabil dan ditentukan secara ketat oleh fitur produk (Model, Warna, Kapasitas). Model ML tidak perlu bekerja keras untuk "menebak" harga, melainkan hanya menghafal pola harga dasar yang telah ditetapkan.
-
-Implikasi: Karena $R^2$ hampir 100%, ini menunjukkan bahwa untuk prediksi harga eceran stabil, model Linear Regression sudah cukup (lebih cepat dan lebih ringan) dan kompleksitas Random Forest tidak memberikan peningkatan kinerja yang signifikan.
-
-## B. Logika Prediksi Berdasarkan Popularitas
-
-Program ini menerapkan logika filterisasi yang terperinci:
-
-Analisis Popularitas Kumulatif: Program pertama kali mengidentifikasi Model iPhone yang paling banyak terjual secara total di lokasi yang dipilih (misalnya, Model X).
-
-Penentuan Konfigurasi: Kemudian, program mengambil konfigurasi terlaris (Warna dan Kapasitas) dari Model X tersebut.
-
-Prediksi: Harga diprediksi untuk konfigurasi terlaris Model X tersebut. Hal ini memastikan bahwa harga prediksi selalu relevan dengan produk paling diminati di pasar lokal tersebut, bukan sekadar produk yang paling mahal.
-
-## C. Manfaat Aplikasi
-
-Aplikasi ini berhasil menyajikan hasil Machine Learning dalam dashboard yang mudah digunakan, memungkinkan pengguna untuk mendapatkan:
-
-Perbandingan penjualan model iPhone secara visual (Grafik).
-
-Informasi produk terlaris secara global dan lokal.
-
-Prediksi harga yang didasarkan pada model yang paling mewakili tren pasar lokal.
+Lampiran: Sertakan screenshot dari Dashboard Canvas Anda yang menampilkan kedua metrik ($R^2$ Score dan Silhouette Score) serta hasil prediksi dan klasterisasi.

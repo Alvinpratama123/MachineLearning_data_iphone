@@ -24,18 +24,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Analisis & Prediksi Pasar iPhone</title>
+    <title>Dashboard Analisis Regresi dan Klasterisasi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            /* Background gradien hitam ke hijau gelap */
-            background: linear-gradient(135deg, #1f2937 0%, #115e59 100%);
+            /* Gradien Hitam ke Teal Gelap */
+            background: linear-gradient(135deg, #1f2937 0%, #064e3b 100%);
             min-height: 100vh;
-        }
-        .container-card {
-            background-color: #1f2937; /* Dark background for main card */
         }
         .table-container {
             overflow-x: auto;
@@ -47,113 +44,126 @@
         .table th, .table td {
             padding: 12px 15px;
             text-align: left;
-            border-bottom: 1px solid #374151; /* Dark border */
+            border-bottom: 1px solid #374151; /* Border gelap */
+            color: #d1d5db; /* Teks terang */
         }
         .table th {
-            background-color: #0f766e; /* Dark teal */
-            color: #f0fdfa;
+            background-color: #0d9488; /* Teal Header */
+            color: white;
             font-weight: 700;
-            text-transform: uppercase;
-        }
-        .table tr {
-            background-color: #111827; /* Very dark background */
-            color: #d1d5db; /* Light gray text */
         }
         .table tr:nth-child(even) {
-            background-color: #1f2937;
+            background-color: #1f2937; /* Baris genap lebih gelap */
         }
         .table tr:hover {
-            background-color: #0f766e; /* Hover effect */
-            color: white;
-        }
-        /* Custom Gold/Orange Accent */
-        .accent-gold {
-            color: #fbbf24; /* Amber-400 */
-        }
-        .border-accent-gold {
-            border-color: #fbbf24;
-        }
-        .bg-teal-gradient {
-            background: linear-gradient(90deg, #0d9488 0%, #14b8a6 100%);
+            background-color: #374151; /* Hover gelap */
         }
     </style>
 </head>
 <body class="p-4 sm:p-8">
 
-    <div class="max-w-6xl mx-auto container-card shadow-2xl rounded-xl p-6 sm:p-10">
-        <h1 class="text-4xl font-extrabold text-white mb-8 border-b-2 border-accent-gold pb-2">
-            Dashboard Prediksi & Analisis Pasar iPhone
-        </h1>
+    <div class="max-w-6xl mx-auto bg-gray-800 shadow-2xl rounded-xl p-6 sm:p-10 border border-teal-700/50">
+        <h1 class="text-3xl font-extrabold text-teal-400 mb-6 border-b-2 border-teal-600/50 pb-2">Dashboard Prediksi & Klasterisasi Pasar iPhone</h1>
 
         <!-- Form Pemilihan Lokasi -->
-        <form method="POST" class="bg-gray-800 p-6 rounded-lg shadow-xl mb-8 flex flex-col sm:flex-row gap-4 items-center border border-gray-700">
-            <label for="lokasi" class="font-semibold text-gray-200 w-full sm:w-auto">Pilih Lokasi Toko:</label>
-            <select name="lokasi" id="lokasi" class="p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-teal-500 focus:border-teal-500 w-full sm:w-1/2 shadow-inner">
+        <form method="POST" class="bg-gray-900 p-4 rounded-xl shadow-inner mb-8 flex flex-col sm:flex-row gap-4 items-center border border-gray-700">
+            <label for="lokasi" class="font-semibold text-gray-300 w-full sm:w-auto">Pilih Lokasi Toko untuk Analisis Detail:</label>
+            <select name="lokasi" id="lokasi" class="p-2 border border-teal-500 bg-gray-700 text-white rounded-lg focus:ring-yellow-400 focus:border-yellow-400 w-full sm:w-1/2">
                 {% for lokasi in lokasis %}
                     <option value="{{ lokasi }}" {% if lokasi == lokasi_terpilih %}selected{% endif %}>{{ lokasi }}</option>
                 {% endfor %}
             </select>
-            <button type="submit" class="bg-teal-gradient text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300 w-full sm:w-auto">
+            <button type="submit" class="bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300 w-full sm:w-auto transform hover:scale-[1.01]">
                 Tampilkan Analisis
             </button>
         </form>
 
-        <!-- Akurasi Model & Analisis Global -->
+        <!-- Akurasi Model dan Analisis K-Means -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Box Akurasi -->
-            <div class="bg-gray-800 p-6 rounded-lg shadow-xl border-t-4 border-teal-500">
-                <h3 class="text-xl font-bold text-teal-300 mb-3">Akurasi Model Prediksi</h3>
-                <p class="text-gray-300">Linear Regression: <span class="text-2xl font-extrabold accent-gold">{{ "%.2f"|format(akurasi_lr) }}%</span></p>
-                <p class="text-gray-300">Random Forest: <span class="text-2xl font-extrabold accent-gold">{{ "%.2f"|format(akurasi_rf) }}%</span></p>
-                <p class="text-xs text-gray-500 mt-3">
+            
+            <!-- Akurasi Linear Regression -->
+            <div class="bg-gray-700 p-6 rounded-xl shadow-lg border-t-4 border-blue-400">
+                <h3 class="text-xl font-semibold text-blue-300 mb-2">📈 Akurasi Model Prediksi (LR)</h3>
+                <p class="text-gray-200">Linear Regression R² Score:</p>
+                <p class="text-4xl font-black text-blue-400 mt-1">
+                    {{ "%.2f"|format(akurasi_lr) }}%
+                </p>
+                <p class="text-sm text-gray-400 mt-3 whitespace-pre-wrap">
                     {% if info_data_check %}
-                        * {{ info_data_check }}
+                        {{ info_data_check }}
                     {% else %}
-                        * Model sangat akurat karena harga eceran cenderung stabil berdasarkan fitur produk.
+                        * Model sangat akurat karena harga eceran cenderung stabil.
                     {% endif %}
                 </p>
             </div>
             
-            {% if top_selling_info %}
-            <!-- Analisis Global -->
-            <div class="md:col-span-2 bg-gray-900 p-6 rounded-lg shadow-xl border-t-4 border-accent-gold">
-                <h3 class="text-xl font-bold accent-gold mb-2">🌟 Analisis Model Terlaris (Global)</h3>
-                <pre class="text-gray-300 whitespace-pre-wrap text-sm">{{ top_selling_info }}</pre>
-                <p class="text-xs text-gray-500 mt-2">Model terlaris adalah "model paling bagus" dari sudut pandang pasar secara keseluruhan.</p>
+            <!-- Analisis K-Means & Silhouette Score -->
+            <div class="md:col-span-2 bg-gray-700 p-6 rounded-xl shadow-lg border-t-4 border-yellow-400">
+                <h3 class="text-xl font-semibold text-yellow-300 mb-2">⭐ Analisis Segmentasi K-Means (Klasterisasi Harga)</h3>
+                
+                <!-- BARU: Menampilkan Silhouette Score -->
+                {% if lokasi_terpilih %}
+                <div class="mb-4 p-3 bg-gray-800 rounded-lg border border-yellow-500/50 flex justify-between items-center">
+                    <p class="text-gray-300 font-medium">Metrik Kualitas Klaster: **Silhouette Score**</p>
+                    <p class="text-3xl font-extrabold text-yellow-400">
+                        {{ "%.4f"|format(silhouette_score_val) }}
+                    </p>
+                </div>
+                {% endif %}
+                <!-- Akhir BARU -->
+
+                {% if cluster_analysis %}
+                    <pre class="text-gray-300 whitespace-pre-wrap">{{ cluster_analysis }}</pre>
+                    <p class="text-sm text-gray-400 mt-3">
+                        *Silhouette Score (0 hingga 1) menunjukkan kualitas pemisahan klaster. Nilai yang lebih tinggi (mendekati 1) berarti klaster lebih padat dan terpisah.
+                    </p>
+                {% else %}
+                    <p class="text-gray-400">Pilih lokasi toko untuk menjalankan analisis klasterisasi harga (Low, Mid, High Value).</p>
+                {% endif %}
+            </div>
+
+            
+            {% if top_selling_info and not lokasi_terpilih %}
+            <!-- Analisis Global (Hanya tampil saat GET dan belum memilih lokasi) -->
+            <div class="md:col-span-3 bg-gray-700 p-6 rounded-xl shadow-lg border-t-4 border-teal-400">
+                <h3 class="text-xl font-semibold text-teal-300 mb-2">🌟 Analisis Model Terlaris (Global)</h3>
+                <pre class="text-gray-300 whitespace-pre-wrap">{{ top_selling_info }}</pre>
+                <p class="text-sm text-gray-400 mt-2">Model terlaris adalah "model paling bagus" dari sudut pandang pasar.</p>
             </div>
             {% endif %}
 
         </div>
 
         {% if lokasi_terpilih %}
-        <h2 class="text-3xl font-bold text-teal-400 mt-8 mb-4">Analisis Lokasi: {{ lokasi_terpilih }}</h2>
+        <h2 class="text-2xl font-bold text-teal-400 mt-8 mb-4 border-b border-gray-600 pb-2">Analisis Lokasi: {{ lokasi_terpilih }}</h2>
         
         <!-- Hasil Prediksi -->
-        <div class="bg-gray-900 p-6 rounded-lg shadow-xl border-t-4 border-accent-gold mb-8">
-            <h3 class="text-xl font-bold accent-gold mb-2">💰 Prediksi Harga Produk Paling Diminati</h3>
-            <p class="text-gray-300">Harga Prediksi (Random Forest) untuk Produk Terpopuler:</p>
-            <p class="text-5xl font-extrabold text-yellow-300 mt-2">
-                <!-- PEMFORMATAN RUPIAH YANG BENAR -->
+        <div class="bg-gray-700 p-6 rounded-xl shadow-lg border-t-4 border-amber-500 mb-8">
+            <h3 class="text-xl font-semibold text-amber-400 mb-2">💰 Prediksi Harga Produk Paling Diminati</h3>
+            <p class="text-gray-300">Prediksi Harga (Linear Regression) untuk:</p>
+            <p class="text-xl font-medium text-gray-200 mb-2">{{ produk_terpopuler_terpilih }}</p>
+            <p class="text-5xl font-extrabold text-yellow-300 mt-1">
+                <!-- BARIS KRITIS: FORMAT RUPIAH -->
                 Rp{{ "{:,.0f}".format(prediksi|float) }}
             </p>
-            <p class="text-sm text-gray-500 mt-2">*Harga diprediksi untuk Model, Warna, dan Kapasitas paling banyak terjual di lokasi ini.</p>
+            <p class="text-sm text-gray-400 mt-2">*Harga diprediksi untuk model terlaris kumulatif di lokasi ini.</p>
         </div>
 
         <!-- Grafik dan Tabel -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <h3 class="text-xl font-semibold text-teal-400 mb-3">Grafik Popularitas Model</h3>
+                <h3 class="text-xl font-semibold text-gray-200 mb-3">Grafik Popularitas Model</h3>
                 {% if img_base64 %}
-                    <div class="bg-gray-900 p-4 rounded-lg shadow-xl border border-gray-700">
+                    <div class="bg-gray-700 p-4 rounded-xl shadow-lg border border-gray-600">
                         <img src="data:image/png;base64,{{ img_base64 }}" alt="Grafik Popularitas Model" class="w-full h-auto rounded-lg">
                     </div>
                 {% endif %}
             </div>
             
             <div>
-                <h3 class="text-xl font-semibold text-teal-400 mb-3">Tabel Popularitas Produk</h3>
+                <h3 class="text-xl font-semibold text-gray-200 mb-3">Tabel Popularitas Produk (Rincian Fitur)</h3>
                 {% if table_html %}
-                    <div class="table-container bg-gray-900 rounded-lg shadow-xl border border-gray-700">
+                    <div class="table-container bg-gray-700 rounded-xl shadow-lg border border-gray-600">
                         {{ table_html|safe }}
                     </div>
                 {% endif %}
@@ -163,16 +173,9 @@
         {% else %}
         <!-- Tampilan Awal (Grafik Global) -->
         <div class="mt-8">
-            <h2 class="text-2xl font-bold text-teal-400 mt-8 mb-4">Grafik Popularitas Model Global</h2>
-            <div class="bg-gray-900 p-6 rounded-lg shadow-xl border border-gray-700 max-w-2xl mx-auto">
-                {% if img_base64 %}
-                    <img src="data:image/png;base64,{{ img_base64 }}" alt="Grafik Popularitas Model Global" class="w-full h-auto rounded-lg">
-                {% endif %}
-                <p class="text-sm text-gray-500 text-center mt-4">Pilih lokasi di atas untuk memulai analisis spesifik kota.</p>
+            <h2 class="text-2xl font-bold text-teal-400 mt-8 mb-4 border-b border-gray-600 pb-2">Grafik Popularitas Model Global</h2>
+            <div class="bg-gray-700 p-4 rounded-xl shadow-lg border border-gray-600 max-w-2xl mx-auto">
+                <img src="data:image/png;base64,{{ img_base64 }}" alt="Grafik Popularitas Model Global" class="w-full h-auto rounded-lg">
             </div>
         </div>
         {% endif %}
-
-    </div>
-</body>
-</html>
