@@ -1,451 +1,322 @@
-# from flask import Flask, render_template_string, request
-# import pandas as pd
-# from sklearn.preprocessing import LabelEncoder
-# from sklearn.linear_model import LinearRegression
-# from sklearn.ensemble import RandomForestRegressor
-# from sklearn.metrics import r2_score
-# import joblib
-# import matplotlib
-# matplotlib.use('Agg')
-# import matplotlib.pyplot as plt
-# import io
-# import base64
-
-# app = Flask(__name__)
-
-# # ===== Load dataset dan persiapkan encoding =====
-# df = pd.read_excel('data_penjualan_iphone_1000.xlsx')
-
-# le_model = LabelEncoder()
-# le_warna = LabelEncoder()
-# le_lokasi = LabelEncoder()
-
-# df['Model'] = le_model.fit_transform(df['Model'])
-# df['Warna'] = le_warna.fit_transform(df['Warna'])
-# df['Lokasi Toko'] = le_lokasi.fit_transform(df['Lokasi Toko'])
-
-# X = df[['Model', 'Warna', 'Kapasitas (GB)', 'Lokasi Toko', 'Jumlah Terjual']]
-# y = df['Harga (Rp)']
-
-# # Linear Regression
-# lr = LinearRegression().fit(X, y)
-
-# # Random Forest
-# try:
-#     rf = joblib.load('model_randomforest.pkl')
-# except:
-#     rf = RandomForestRegressor(n_estimators=100, random_state=42).fit(X, y)
-#     joblib.dump(rf, 'model_randomforest.pkl')
-
-# akurasi_lr = r2_score(y, lr.predict(X)) * 100
-# akurasi_rf = r2_score(y, rf.predict(X)) * 100
-
-# html_template = """
-# <h1>📱 Analisis Permintaan iPhone di Kota Tertentu</h1>
-# <form method="POST">
-#     Lokasi Toko: 
-#     <select name="lokasi">
-#         {% for l in lokasis %}
-#             <option value="{{l}}">{{l}}</option>
-#         {% endfor %}
-#     </select>
-#     <input type="submit" value="Analisis">
-# </form>
-
-# {% if table_html %}
-# <hr>
-# <h2>📊 iPhone Paling Diminati di {{ lokasi_terpilih }}</h2>
-# {{ table_html | safe }}
-# <br>
-# <h2>📈 Grafik Popularitas</h2>
-# <img src="data:image/png;base64,{{ img_base64 }}" style="max-width:800px;"><br>
-# <h2>📌 Prediksi Harga & Akurasi</h2>
-# Prediksi Harga (Random Forest) untuk tipe paling diminati: Rp{{ prediksi | round(0) }}<br>
-# Akurasi Linear Regression: {{ akurasi_lr | round(2) }}%<br>
-# Akurasi Random Forest: {{ akurasi_rf | round(2) }}%<br>
-# {% endif %}
-# """
-
-# @app.route('/', methods=['GET', 'POST'])
-# def home():
-#     table_html = None
-#     img_base64 = None
-#     prediksi = None
-#     lokasi_terpilih = None
-
-#     if request.method == 'POST':
-#         lokasi_input = request.form['lokasi']
-#         lokasi_enc = le_lokasi.transform([lokasi_input])[0]
-#         lokasi_terpilih = lokasi_input
-
-#         # Filter dataset berdasarkan lokasi
-#         subset = df[df['Lokasi Toko'] == lokasi_enc]
-
-#         # Agregasi untuk tabel: Model, Warna, Kapasitas, Harga rata-rata, Jumlah terjual
-#         grouped = subset.groupby(['Model','Warna','Kapasitas (GB)']).agg(
-#             Harga_Rata2=('Harga (Rp)','mean'),
-#             Jumlah_Terjual=('Jumlah Terjual','sum')
-#         ).reset_index()
-
-#         # Decode label kembali ke nama asli
-#         grouped['Model'] = le_model.inverse_transform(grouped['Model'])
-#         grouped['Warna'] = le_warna.inverse_transform(grouped['Warna'])
-
-#         # Tabel HTML
-#         table_html = grouped.sort_values('Jumlah_Terjual', ascending=False).to_html(index=False)
-
-#         # Grafik bar: Model+Warna vs Jumlah Terjual
-#         plt.figure(figsize=(10,5))
-#         labels = grouped['Model'] + ' ' + grouped['Warna']
-#         plt.bar(labels, grouped['Jumlah_Terjual'], color='skyblue')
-#         plt.xticks(rotation=45, ha='right')
-#         plt.ylabel('Jumlah Terjual')
-#         plt.title(f'Popularitas iPhone di {lokasi_input}')
-#         plt.tight_layout()
-
-#         buf = io.BytesIO()
-#         plt.savefig(buf, format='png')
-#         buf.seek(0)
-#         img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-#         plt.close()
-
-#         # Prediksi harga Random Forest untuk tipe paling diminati (terjual terbanyak)
-#         top = grouped.sort_values('Jumlah_Terjual', ascending=False).iloc[0]
-#         model_enc = le_model.transform([top['Model']])[0]
-#         warna_enc = le_warna.transform([top['Warna']])[0]
-#         kapasitas = top['Kapasitas (GB)']
-#         prediksi = rf.predict([[model_enc, warna_enc, kapasitas, lokasi_enc, 1]])[0]
-
-#     return render_template_string(html_template,
-#                                   lokasis=le_lokasi.classes_,
-#                                   table_html=table_html,
-#                                   img_base64=img_base64,
-#                                   prediksi=prediksi,
-#                                   akurasi_lr=akurasi_lr,
-#                                   akurasi_rf=akurasi_rf,
-#                                   lokasi_terpilih=lokasi_terpilih)
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
-# import matplotlib
-# matplotlib.use('Agg') # SOLUSI UNTUK MENGHINDARI CRASH DI MACOS
-
-# from flask import Flask, render_template, request
-# import pandas as pd
-# from sklearn.model_selection import train_test_split
-# from sklearn.preprocessing import LabelEncoder
-# from sklearn.linear_model import LinearRegression
-# from sklearn.ensemble import RandomForestRegressor
-# from sklearn.metrics import r2_score
-# import matplotlib.pyplot as plt
-# import io
-# import base64
-# import joblib
-
-# app = Flask(__name__)
-
-# # Load Excel
-# df_full = pd.read_excel("data_penjualan_iphone_1000.xlsx")
-# lokasis = df_full['Lokasi Toko'].unique()
-
-# # --- LANGKAH DATA CLEANING: Hapus Duplikasi dan Reset Indeks ---
-# # 1. Menghapus baris duplikat (jika ada)
-# df_full.drop_duplicates(inplace=True)
-# # 2. Reset indeks setelah penghapusan
-# df_full.reset_index(drop=True, inplace=True)
-# # ----------------------------------------------------
-
-# # Encode kategori pada dataset penuh (digunakan untuk prediksi)
-# le_model = LabelEncoder()
-# le_warna = LabelEncoder()
-# le_lokasi = LabelEncoder()
-# df_full['Model_enc'] = le_model.fit_transform(df_full['Model'])
-# df_full['Warna_enc'] = le_warna.fit_transform(df_full['Warna'])
-# df_full['Lokasi_enc'] = le_lokasi.fit_transform(df_full['Lokasi Toko'])
-
-# # Inisialisasi Akurasi Global (Tidak dipakai lagi di luar home())
-# # akurasi_lr = akurasi_rf = None
-
-# @app.route('/', methods=['GET','POST'])
-# def home():
-#     # Menginisialisasi variabel dengan nilai default aman
-#     akurasi_lr = 0.00
-#     akurasi_rf = 0.00
-#     prediksi = 0
-#     table_html = img_base64 = lokasi_terpilih = info_data_check = top_selling_info = produk_terpopuler_terpilih = None
-    
-#     # --- LOGIKA KETIKA PAGE DILUAR POST REQUEST (Initial Load / Global Analysis) ---
-#     if request.method == 'GET':
-#         # 1. Tentukan Model Terpopuler Global
-#         global_popular = df_full.groupby(['Model', 'Kapasitas (GB)']).agg(
-#             {'Jumlah Terjual': 'sum', 'Harga (Rp)': 'mean'}
-#         ).reset_index().sort_values('Jumlah Terjual', ascending=False)
-        
-#         # Ambil 3 model terpopuler
-#         top_3_models = global_popular.head(3)
-        
-#         top_selling_info = "Model Terlaris (Global):\n"
-#         for index, row in top_3_models.iterrows():
-#             # Menggunakan f-string untuk memformat harga Rupiah dengan pemisah ribuan
-#             # Format: Rp12.345.678
-#             harga_formatted = f"Rp{row['Harga (Rp)']:,.0f}".replace(",", "_").replace(".", ",").replace("_", ".") 
-#             top_selling_info += f"- {row['Model']} ({row['Kapasitas (GB)']} GB): {row['Jumlah Terjual']} unit terjual (Rata-rata Harga: {harga_formatted})\n"
-
-#         # 2. Grafik Popularitas Global
-#         plt.figure(figsize=(8,5))
-#         popular_global_plot = df_full.groupby('Model')['Jumlah Terjual'].sum()
-#         popular_global_plot.plot(kind='bar', color='#1e90ff')
-#         plt.ylabel('Jumlah Terjual (Global)')
-#         plt.title('Popularitas Model iPhone (Keseluruhan Pasar)')
-#         buf = io.BytesIO()
-#         plt.tight_layout()
-#         plt.savefig(buf, format='png')
-#         buf.seek(0)
-#         plt.close()
-#         img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-
-#     # --- LOGIKA KETIKA ADA POST REQUEST (Location-Specific Analysis) ---
-#     elif request.method == 'POST':
-#         lokasi_terpilih = request.form['lokasi']
-        
-#         # 1. Filter data untuk lokasi yang dipilih
-#         df_lokasi = df_full[df_full['Lokasi Toko']==lokasi_terpilih].copy()
-        
-#         # 2. Fitur dan target per lokasi
-#         X = df_lokasi[['Model_enc','Warna_enc','Kapasitas (GB)']] 
-#         y = df_lokasi['Harga (Rp)']
-
-#         # Pengecekan, hanya lanjutkan jika data lokasi memadai (misal, > 5 baris)
-#         if len(df_lokasi) > 5:
-#             # 3. Split dan Latih Model Per Lokasi
-#             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-#             # Latih Linear Regression
-#             lr = LinearRegression().fit(X_train, y_train)
-#             pred_lr_test = lr.predict(X_test)
-#             akurasi_lr = r2_score(y_test, pred_lr_test) * 100
-
-#             # Latih Random Forest
-#             rf = RandomForestRegressor(n_estimators=100, random_state=42).fit(X_train, y_train)
-#             pred_rf_test = rf.predict(X_test)
-#             akurasi_rf = r2_score(y_test, pred_rf_test) * 100
-
-#             # 4. Pengecekan Variasi Harga (untuk info akurasi)
-#             price_std_check = df_lokasi.groupby(['Model', 'Kapasitas (GB)'])['Harga (Rp)'].std().dropna()
-#             if (price_std_check > 1000).any():
-#                 info_data_check = "Model Prediksi (LR & RF) berhasil menemukan variasi harga. Akurasi tinggi karena variasi harga di kota ini kecil."
-#             else:
-#                 info_data_check = "Harga eceran sangat stabil di kota ini. Akurasi tinggi (>99%) adalah hasil dari hafalan harga dasar produk."
-                
-#             # 5. Tabel popularitas
-#             table_html = df_lokasi.groupby(['Model','Warna','Kapasitas (GB)']).agg({
-#                 'Jumlah Terjual':'sum',
-#                 'Harga (Rp)':'mean'
-#             }).reset_index().sort_values('Jumlah Terjual',ascending=False).to_html(classes='table', index=False)
-
-#             # 6. Grafik popularitas (Lokasi)
-#             plt.figure(figsize=(8,5))
-#             popular = df_lokasi.groupby('Model')['Jumlah Terjual'].sum()
-#             popular.plot(kind='bar', color='#fbbf24') # Warna emas untuk chart per lokasi
-#             plt.ylabel('Jumlah Terjual')
-#             plt.title(f'Popularitas Model iPhone di {lokasi_terpilih}')
-#             buf = io.BytesIO()
-#             plt.tight_layout()
-#             plt.savefig(buf, format='png')
-#             buf.seek(0)
-#             plt.close() 
-#             img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-
-
-#             # 7. LOGIKA KRITIS: PREDIKSI BERDASARKAN MODEL TERLARIS KUMULATIF
-#             popular_model = df_lokasi.groupby(['Model']).agg({'Jumlah Terjual':'sum'}).sort_values('Jumlah Terjual',ascending=False).reset_index().iloc[0]
-#             model_terlaris_name = popular_model['Model']
-            
-#             df_model_terlaris = df_lokasi[df_lokasi['Model']==model_terlaris_name]
-            
-#             # Menemukan konfigurasi TERLARIS di DALAM MODEL TERLARIS tersebut
-#             top_row = df_model_terlaris.groupby(['Model','Warna','Kapasitas (GB)']).sum(numeric_only=True).sort_values('Jumlah Terjual',ascending=False).reset_index().iloc[0]
-
-#             produk_terpopuler_terpilih = f"Model Terlaris Kumulatif: {model_terlaris_name} (Menggunakan konfigurasi terlaris: {top_row['Warna']} {top_row['Kapasitas (GB)']} GB)"
-
-#             X_pred = pd.DataFrame({
-#                 'Model_enc':[le_model.transform([top_row['Model']])[0]],
-#                 'Warna_enc':[le_warna.transform([top_row['Warna']])[0]],
-#                 'Kapasitas (GB)':[top_row['Kapasitas (GB)']],
-#             })
-            
-#             prediksi = round(rf.predict(X_pred)[0], 0) 
-#         else:
-#             info_data_check = "Data di lokasi ini tidak cukup untuk melatih model (kurang dari 5 baris)."
-#             lokasi_terpilih = None # Kembali ke tampilan global
-
-#     # Baris return yang benar:
-#     return render_template('index.html', lokasis=lokasis, table_html=table_html,
-#                            img_base64=img_base64, prediksi=prediksi, lokasi_terpilih=lokasi_terpilih,
-#                            akurasi_lr=akurasi_lr, akurasi_rf=akurasi_rf, info_data_check=info_data_check,
-#                            top_selling_info=top_selling_info, produk_terpopuler_terpilih=produk_terpopuler_terpilih)
-
-# if __name__=='__main__':
-#     app.run(debug=True)
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg') # Solusi untuk lingkungan tanpa display
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler 
 from sklearn.linear_model import LinearRegression
-from sklearn.cluster import KMeans # Import K-Means
-from sklearn.metrics import r2_score, silhouette_score # BARU: Import silhouette_score
+from sklearn.cluster import KMeans 
+from sklearn.metrics import r2_score, silhouette_score 
 import matplotlib.pyplot as plt
 import io
 import base64
-import numpy as np # Import numpy untuk perhitungan
+import numpy as np
+import random
+import warnings
+
+# Mengabaikan peringatan K-Means
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 
 app = Flask(__name__)
 
-# Load Excel
-df_full = pd.read_excel("data_penjualan_iphone_1000.xlsx")
-lokasis = df_full['Lokasi Toko'].unique()
+df_full = pd.DataFrame()
+le_merk = LabelEncoder()
+le_type = LabelEncoder()
+MIN_DATA_FOR_MODEL = 5 # Minimum baris data untuk melatih model
 
-# --- LANGKAH DATA CLEANING: Hapus Duplikasi dan Reset Indeks ---
-df_full.drop_duplicates(inplace=True)
-df_full.reset_index(drop=True, inplace=True)
-# ----------------------------------------------------
+def format_rupiah(price):
+    """Mengubah float/numerik menjadi format Rupiah string yang aman."""
+    try:
+        if price is None or pd.isna(price) or not (isinstance(price, (int, float, np.number))):
+            return "-"
+        return f"Rp{price:,.0f}".replace(",", "_").replace(".", ",").replace("_", ".")
+    except Exception:
+        return "-"
 
-# Encode kategori pada dataset penuh
-le_model = LabelEncoder()
-le_warna = LabelEncoder()
-le_lokasi = LabelEncoder()
-df_full['Model_enc'] = le_model.fit_transform(df_full['Model'])
-df_full['Warna_enc'] = le_warna.fit_transform(df_full['Warna'])
-df_full['Lokasi_enc'] = le_lokasi.fit_transform(df_full['Lokasi Toko'])
-
-@app.route('/', methods=['GET','POST'])
-def home():
-    # Menginisialisasi variabel dengan nilai default aman
-    akurasi_lr = 0.00
-    prediksi = 0
-    table_html = img_base64 = lokasi_terpilih = info_data_check = top_selling_info = produk_terpopuler_terpilih = None
-    cluster_analysis = None
-    silhouette_score_val = 0.0 # BARU: Inisialisasi Silhouette Score
+# --- Load dan Persiapan Data ---
+try:
+    # Memastikan file diakses dengan aman
+    df_raw = pd.read_csv("Data Penjualan Toko HP.csv")
+    df_full = df_raw.copy()
     
-    # --- LOGIKA KETIKA PAGE DILUAR POST REQUEST (Initial Load / Global Analysis) ---
-    if request.method == 'GET':
-        # 1. Tentukan Model Terpopuler Global
-        global_popular = df_full.groupby(['Model', 'Kapasitas (GB)']).agg(
-            {'Jumlah Terjual': 'sum', 'Harga (Rp)': 'mean'}
-        ).reset_index().sort_values('Jumlah Terjual', ascending=False)
+    # Rename kolom dan membersihkan spasi di nama kolom
+    df_full.rename(columns={'Harga': 'Harga (Rp)', 'type': 'Type Produk', 'nama pembeli': 'Nama Pembeli'}, inplace=True)
+    
+    if not df_full.empty:
+        df_full.drop_duplicates(inplace=True)
+        df_full['Harga (Rp)'] = pd.to_numeric(df_full['Harga (Rp)'], errors='coerce')
+        df_full.dropna(subset=['Harga (Rp)', 'merk', 'Type Produk', 'Nama Pembeli'], inplace=True)
+        df_full = df_full[df_full['Harga (Rp)'] > 1000] 
+        df_full['merk'] = df_full['merk'].astype(str).str.strip()
+        df_full['Type Produk'] = df_full['Type Produk'].astype(str).str.strip()
+        df_full['Nama Pembeli'] = df_full['Nama Pembeli'].astype(str).str.strip().str.replace('"', '')
         
-        top_3_models = global_popular.head(3)
+        # Penanganan Outlier
+        if len(df_full) > 50:
+            harga_mean = df_full['Harga (Rp)'].mean()
+            harga_std = df_full['Harga (Rp)'].std()
+            lower_bound = harga_mean - 3 * harga_std
+            upper_bound = harga_mean + 3 * harga_std
+            df_full = df_full[(df_full['Harga (Rp)'] >= lower_bound) & (df_full['Harga (Rp)'] <= upper_bound)]
         
-        top_selling_info = "Model Terlaris (Global):\n"
-        for index, row in top_3_models.iterrows():
-            # Mengganti karakter pemisah ribuan agar formatting rupiah tetap aman
-            harga_formatted = f"Rp{row['Harga (Rp)']:,.0f}".replace(",", "_").replace(".", ",").replace("_", ".") 
-            top_selling_info += f"- {row['Model']} ({row['Kapasitas (GB)']} GB): {row['Jumlah Terjual']} unit terjual (Rata-rata Harga: {harga_formatted})\n"
+        df_full.reset_index(drop=True, inplace=True)
 
-        # 2. Grafik Popularitas Global
-        plt.figure(figsize=(8,5))
-        popular_global_plot = df_full.groupby('Model')['Jumlah Terjual'].sum()
-        popular_global_plot.plot(kind='bar', color='#1e90ff')
-        plt.ylabel('Jumlah Terjual (Global)')
-        plt.title('Popularitas Model iPhone (Keseluruhan Pasar)')
-        buf = io.BytesIO()
-        plt.tight_layout()
-        plt.savefig(buf, format='png')
-        buf.seek(0)
-        plt.close()
-        img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-
-    # --- LOGIKA KETIKA ADA POST REQUEST (Location-Specific Analysis) ---
-    elif request.method == 'POST':
-        lokasi_terpilih = request.form['lokasi']
+        # Pembuatan Data Sintetik: Jumlah Terjual (Jika belum ada)
+        if 'Jumlah Terjual' not in df_full.columns:
+            np.random.seed(42)
+            def generate_sales(price):
+                if price < 2000000: return random.randint(3, 10)
+                elif price < 4000000: return random.randint(2, 5)
+                else: return random.randint(1, 3)
+            df_full['Jumlah Terjual'] = df_full['Harga (Rp)'].apply(generate_sales)
         
-        # 1. Filter data untuk lokasi yang dipilih
-        df_lokasi = df_full[df_full['Lokasi Toko']==lokasi_terpilih].copy()
-        
-        # 2. Fitur dan target per lokasi
-        X = df_lokasi[['Model_enc','Warna_enc','Kapasitas (GB)']] 
-        y = df_lokasi['Harga (Rp)']
-
-        if len(df_lokasi) > 5:
-            # 3. Split dan Latih Model Regresi Linier
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-            # Latih Linear Regression
-            lr = LinearRegression().fit(X_train, y_train)
-            pred_lr_test = lr.predict(X_test)
-            akurasi_lr = r2_score(y_test, pred_lr_test) * 100
-
-            # --------------------------------------------------------
-            # 4. IMPLEMENTASI K-MEANS UNTUK SEGMENTASI PRODUK
-            # Tentukan K=3 untuk 3 klaster (Misal: Low, Mid, High Price)
-            kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(X)
-            df_lokasi['Klaster'] = kmeans.labels_
-
-            # Menghitung Silhouette Score (memerlukan minimal 2 klaster dan 2 sampel)
-            if len(np.unique(kmeans.labels_)) > 1:
-                silhouette_score_val = silhouette_score(X, kmeans.labels_)
-            else:
-                silhouette_score_val = 0.0
-
-            # Hitung rata-rata harga untuk setiap klaster
-            cluster_summary = df_lokasi.groupby('Klaster').agg(
-                Rata_rata_Harga=('Harga (Rp)', 'mean'),
-                Jumlah_Produk=('Klaster', 'size')
-            ).sort_values('Rata_rata_Harga').reset_index()
-
-            # Tentukan label klaster berdasarkan harga rata-rata
-            cluster_labels = ["Rendah (Low-Value)", "Menengah (Mid-Value)", "Tinggi (High-Value)"]
-            
-            cluster_analysis = "Analisis Segmentasi Harga (K-Means, K=3):\n"
-            for i, row in cluster_summary.iterrows():
-                harga_formatted = f"Rp{row['Rata_rata_Harga']:,.0f}".replace(",", "_").replace(".", ",").replace("_", ".") 
-                cluster_analysis += f"- Klaster {i} ({cluster_labels[i]}): Rata-rata Harga {harga_formatted}, Total Produk: {row['Jumlah_Produk']} unit\n"
-            # --------------------------------------------------------
-                
-            # 5. Pengecekan Variasi Harga (untuk info akurasi)
-            price_std_check = df_lokasi.groupby(['Model', 'Kapasitas (GB)'])['Harga (Rp)'].std().dropna()
-            if (price_std_check > 1000).any():
-                info_data_check = "Model Prediksi (Linear Regression) berhasil menemukan variasi harga. Akurasi tinggi karena variasi harga di kota ini kecil."
-            else:
-                info_data_check = "Harga eceran sangat stabil di kota ini. Akurasi tinggi (>99%) adalah hasil dari hafalan harga dasar produk."
-                
-            # 6. Tabel popularitas
-            table_html = df_lokasi.groupby(['Model','Warna','Kapasitas (GB)']).agg({
-                'Jumlah Terjual':'sum',
-                'Harga (Rp)':'mean'
-            }).reset_index().sort_values('Jumlah Terjual',ascending=False).to_html(classes='table', index=False)
-
-            # 7. LOGIKA KRITIS: PREDIKSI BERDASARKAN MODEL TERLARIS KUMULATIF
-            popular_model = df_lokasi.groupby(['Model']).agg({'Jumlah Terjual':'sum'}).sort_values('Jumlah Terjual',ascending=False).reset_index().iloc[0]
-            model_terlaris_name = popular_model['Model']
-            
-            df_model_terlaris = df_lokasi[df_lokasi['Model']==model_terlaris_name]
-            
-            top_row = df_model_terlaris.groupby(['Model','Warna','Kapasitas (GB)']).sum(numeric_only=True).sort_values('Jumlah Terjual',ascending=False).reset_index().iloc[0]
-
-            produk_terpopuler_terpilih = f"Model Terlaris Kumulatif: {model_terlaris_name} (Menggunakan konfigurasi terlaris: {top_row['Warna']} {top_row['Kapasitas (GB)']} GB)"
-
-            X_pred = pd.DataFrame({
-                'Model_enc':[le_model.transform([top_row['Model']])[0]],
-                'Warna_enc':[le_warna.transform([top_row['Warna']])[0]],
-                'Kapasitas (GB)':[top_row['Kapasitas (GB)']],
-            })
-            
-            # Prediksi menggunakan Linear Regression (lr)
-            prediksi = round(lr.predict(X_pred)[0], 0) 
+        # Encoding Data 
+        if len(df_full) > 0:
+            le_merk.fit(df_full['merk'])
+            le_type.fit(df_full['Type Produk'])
+            df_full['Merk_enc'] = le_merk.transform(df_full['merk'])
+            df_full['Type_enc'] = le_type.transform(df_full['Type Produk'])
         else:
-            info_data_check = "Data di lokasi ini tidak cukup untuk melatih model (kurang dari 5 baris)."
-            lokasi_terpilih = None 
+             print("Warning: Data kosong setelah pembersihan.")
+    
+except Exception as e:
+    print(f"FATAL ERROR saat memuat atau membersihkan data: {e}")
+    df_full = pd.DataFrame()
+# -------------------------------------------------------------------
 
-    return render_template('index.html', lokasis=lokasis, table_html=table_html,
-                           img_base64=img_base64, prediksi=prediksi, lokasi_terpilih=lokasi_terpilih,
-                           akurasi_lr=akurasi_lr, info_data_check=info_data_check,
-                           top_selling_info=top_selling_info, produk_terpopuler_terpilih=produk_terpopuler_terpilih,
-                           cluster_analysis=cluster_analysis,
-                           silhouette_score_val=silhouette_score_val) # BARU: Mengirim Silhouette Score ke HTML
+def generate_plot(df, title, ylabel, color):
+    """Fungsi pembantu untuk membuat plot bar 10 merk teratas."""
+    if df.empty or 'merk' not in df.columns or 'Jumlah Terjual' not in df.columns:
+        return None
+        
+    plt.figure(figsize=(8,5))
+    plot_data = df.groupby('merk')['Jumlah Terjual'].sum().sort_values(ascending=False).head(10)
+    
+    plt.style.use('dark_background')
+    
+    if plot_data.empty: 
+        plt.text(0.5, 0.5, "Data tidak cukup untuk grafik.", 
+                 horizontalalignment='center', verticalalignment='center', 
+                 transform=plt.gca().transAxes, color='white')
+        plt.title(title, color='white')
+        
+    else:
+        plot_data.plot(kind='bar', color=color)
+        plt.ylabel(ylabel, color='white')
+        plt.xlabel('Merk', color='white')
+        plt.title(title, color='white')
+        plt.xticks(rotation=45, ha='right', color='white')
+        plt.yticks(color='white')
+        
+    plt.gca().set_facecolor('black')
+    plt.gcf().set_facecolor('black')
+    
+    buf = io.BytesIO()
+    plt.tight_layout()
+    plt.savefig(buf, format='png', transparent=True, bbox_inches='tight') 
+    buf.seek(0)
+    plt.close()
+    return base64.b64encode(buf.getvalue()).decode('utf-8')
+
+def find_optimal_k_and_plot(X_scaled, max_k=10):
+    """Menghitung optimal K menggunakan Elbow Method dan menghasilkan plot."""
+    inertias = []
+    
+    # Pastikan data setidaknya memiliki 2 baris untuk klasterisasi
+    max_k = min(max_k, len(X_scaled) - 1)
+    if max_k < 2:
+        return 3, None 
+        
+    K_range = range(1, max_k + 1)
+    
+    try:
+        for k in K_range:
+            kmeans = KMeans(n_clusters=k, random_state=42, n_init='auto', max_iter=300)
+            kmeans.fit(X_scaled)
+            inertias.append(kmeans.inertia_)
+    except Exception:
+        return 3, None
+        
+    optimal_k = 3
+    if len(K_range) > 3:
+        diff = np.diff(inertias)
+        diff_2 = np.diff(diff)
+        if len(diff_2) > 0:
+            idx_elbow = np.argmin(diff_2) 
+            optimal_k = idx_elbow + 3 
+            optimal_k = max(2, min(optimal_k, max_k))
+        else:
+            optimal_k = max(2, min(3, max_k))
+
+    plt.figure(figsize=(6, 4))
+    plt.style.use('dark_background') 
+    plt.plot(K_range, inertias, marker='o', color='#fdba74') 
+    plt.title('Metode Elbow untuk Optimal K', color='white')
+    plt.xlabel('Jumlah Klaster (K)', color='white')
+    plt.ylabel('Inersia', color='white')
+    plt.xticks(color='white')
+    plt.yticks(color='white')
+    
+    if optimal_k > 1 and optimal_k <= max_k:
+        plt.axvline(x=optimal_k, color='#ef4444', linestyle='--', label=f'Optimal K = {optimal_k}')
+        plt.legend(facecolor='black', edgecolor='gray', labelcolor='white')
+        
+    plt.gca().set_facecolor('black')
+    plt.gcf().set_facecolor('black')
+        
+    buf = io.BytesIO()
+    plt.tight_layout()
+    plt.savefig(buf, format='png', transparent=True)
+    buf.seek(0)
+    plt.close()
+    elbow_img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+    
+    return optimal_k, elbow_img_base64
+
+
+def run_global_analysis(df_input):
+    """Menjalankan regresi dan klasterisasi pada SELURUH data global."""
+    
+    # Inisialisasi hasil default
+    results = {
+        'akurasi_lr': 0.00,
+        'prediksi': df_full['Harga (Rp)'].mean() if not df_full.empty else 0,
+        'produk_terpopuler_terpilih': "N/A - N/A",
+        'cluster_analysis': "Data tidak cukup untuk analisis klasterisasi dan prediksi.",
+        'silhouette_score_val': 0.0,
+        'elbow_img_base64': None,
+        'info_data_check': f"Total data stabil: {len(df_input)} baris."
+    }
+
+    if len(df_input) < MIN_DATA_FOR_MODEL:
+        results['info_data_check'] = "Data terlalu sedikit. Analisis Model diabaikan."
+        return results, pd.DataFrame()
+    
+    df_analysis = df_input.copy()
+
+    # 1. Linear Regression (Prediksi Harga) - GLOBAL
+    X = df_analysis[['Merk_enc','Type_enc']] 
+    y = df_analysis['Harga (Rp)']
+
+    # Menggunakan Test Split minimal untuk mendapatkan Akurasi Global
+    test_size = max(0.2, 5 / len(X)) if len(X) >= 5 else 0.0 # memastikan setidaknya 5 data tes
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
+    lr = LinearRegression().fit(X_train, y_train)
+    
+    if test_size > 0.0: 
+        pred_lr_test = lr.predict(X_test)
+        akurasi_lr = r2_score(y_test, pred_lr_test) * 100
+        results['akurasi_lr'] = max(0.0, akurasi_lr) 
+        
+    # 2. K-MEANS UNTUK SEGMENTASI PRODUK GLOBAL
+    X_cluster = df_analysis[['Harga (Rp)', 'Merk_enc']].copy()
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X_cluster)
+    
+    optimal_k, elbow_img_base64 = find_optimal_k_and_plot(X_scaled)
+    results['elbow_img_base64'] = elbow_img_base64
+    
+    n_clusters = max(2, min(optimal_k, len(df_analysis) - 1))
+    
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto').fit(X_scaled)
+    df_analysis['Klaster'] = kmeans.labels_
+    
+    if len(np.unique(kmeans.labels_)) > 1:
+        results['silhouette_score_val'] = silhouette_score(X_scaled, kmeans.labels_)
+
+    cluster_summary = df_analysis.groupby('Klaster').agg(
+        Rata_rata_Harga=('Harga (Rp)', 'mean'),
+        Jumlah_Produk=('Klaster', 'size')
+    ).sort_values('Rata_rata_Harga').reset_index()
+
+    default_labels = ["Low-Value", "Mid-Value", "High-Value", "Premium"]
+    cluster_text = f"Analisis Segmentasi Harga Global (K-Means, K={n_clusters}):\n"
+    for i, row in cluster_summary.iterrows():
+        label = default_labels[i] if i < len(default_labels) else f"Klaster {i+1}"
+        cluster_text += f"- {label}: Rata-rata Harga {format_rupiah(row['Rata_rata_Harga'])}, Total Produk: {row['Jumlah_Produk']} unit\n"
+    results['cluster_analysis'] = cluster_text
+    
+    # 3. Prediksi Produk Paling Diminati (GLOBAL)
+    if not df_analysis.empty:
+        # Produk yang paling banyak terjual
+        top_row_group = df_analysis.groupby(['merk','Type Produk']).agg({
+            'Jumlah Terjual':'sum', 
+            'Harga (Rp)':'mean'
+        }).reset_index().sort_values('Jumlah Terjual',ascending=False).head(1)
+        
+        if not top_row_group.empty:
+            merk_terlaris = top_row_group['merk'].iloc[0]
+            type_terlaris = top_row_group['Type Produk'].iloc[0]
+            avg_price = top_row_group['Harga (Rp)'].iloc[0]
+
+            results['produk_terpopuler_terpilih'] = f"{merk_terlaris} - {type_terlaris}"
+
+            try:
+                # Prediksi harga untuk produk terlaris menggunakan Model Regresi Global
+                if merk_terlaris in le_merk.classes_ and type_terlaris in le_type.classes_:
+                    X_pred = pd.DataFrame({
+                        'Merk_enc':[le_merk.transform([merk_terlaris])[0]],
+                        'Type_enc':[le_type.transform([type_terlaris])[0]],
+                    })
+                    results['prediksi'] = round(lr.predict(X_pred)[0], 0) 
+                else:
+                    results['prediksi'] = avg_price
+                    results['info_data_check'] += " (Gagal prediksi, menggunakan rata-rata harga produk terlaris.)"
+                    
+            except Exception:
+                results['prediksi'] = avg_price
+                results['info_data_check'] += " (Gagal prediksi, menggunakan rata-rata harga produk terlaris.)"
+
+    # Hapus kolom Merk_enc dan Type_enc sebelum dikirim ke HTML
+    df_analysis.drop(columns=['Merk_enc', 'Type_enc', 'Jumlah Terjual'], errors='ignore', inplace=True)
+    df_analysis['Harga (Rp)'] = df_analysis['Harga (Rp)'].apply(format_rupiah)
+    
+    return results, df_analysis[['Nama Pembeli', 'merk', 'Type Produk', 'Harga (Rp)', 'Klaster']]
+
+
+@app.route('/', methods=['GET'])
+def home():
+    
+    # Cek Kondisi Data Awal
+    if df_full.empty or len(df_full) < MIN_DATA_FOR_MODEL:
+        return render_template('index.html', info_data_check="Error: Data tidak valid atau terlalu sedikit data yang tersisa setelah pembersihan.")
+
+    # --- ANALISIS GLOBAL OTOMATIS ---
+    analysis_results, df_table = run_global_analysis(df_full)
+    
+    # 4. Tabel Data HP dan Nama Pengguna
+    if not df_table.empty:
+        # Pastikan kolom Klaster ada sebelum encoding jika data terlalu sedikit
+        if 'Klaster' not in df_table.columns:
+             df_table['Klaster'] = 'N/A'
+             
+        # Ganti nama klaster menjadi label yang lebih bermakna di tabel
+        df_table['Klaster'] = df_table['Klaster'].apply(lambda x: 
+            {0: 'Low-Value', 1: 'Mid-Value', 2: 'High-Value', 3: 'Premium'}.get(x, f'Klaster {x+1}') if isinstance(x, (int, np.integer)) else x
+        )
+             
+        df_table.rename(columns={'Klaster': 'Klaster Harga', 'merk': 'Merk', 'Type Produk': 'Tipe Produk'}, inplace=True)
+        table_html = df_table.to_html(classes='table', index=False)
+    else:
+        table_html = None
+
+    # 5. Grafik Popularitas Merk Global
+    img_base64 = generate_plot(df_full, 'Top 10 Popularitas Merk HP (Global Market)', 'Total Unit Terjual (Estimasi)', '#10b981')
+    
+    # Gabungkan semua hasil untuk dikirim ke template
+    return render_template('index.html', 
+                           table_html=table_html, 
+                           img_base64=img_base64,
+                           global_analysis=True, # Flag untuk template
+                           **analysis_results # Kirim semua metrik analisis
+                           )
 
 if __name__=='__main__':
-    app.run(debug=True)
+    if not df_full.empty and len(df_full) >= MIN_DATA_FOR_MODEL:
+        plt.style.use('dark_background')
+        app.run(debug=False)
+    else:
+        print("Aplikasi tidak dapat dimulai karena data tidak valid atau terlalu sedikit data yang tersisa setelah pembersihan.")
