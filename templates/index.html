@@ -3,156 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analisis Prediksi Pembelian HP Global</title>
-    <!-- Tailwind CSS CDN -->
+    <title>clasification popularitas hp</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles for dark theme */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #111827; /* Darker Gray 900 */
-            color: #e5e7eb; /* Gray 200 */
+        body { background-color: #0f172a; color: #f1f5f9; font-family: 'Inter', sans-serif; }
+        .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 1rem; }
+        .table-container { 
+            max-height: 600px; 
+            overflow-y: auto; 
+            border-radius: 0.75rem;
+            border: 1px solid #334155;
+            background-color: #0f172a;
         }
-        .card {
-            background-color: #1f2937; /* Gray 800 */
-            border: 1px solid #374151; /* Gray 700 */
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        table { width: 100%; border-collapse: collapse; position: relative; }
+        thead th { 
+            position: sticky; 
+            top: 0; 
+            background-color: #334155; 
+            z-index: 10;
+            padding: 14px; 
+            text-align: left; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            color: #cbd5e1; 
+            letter-spacing: 0.05em;
         }
-        .table {
-            width: 100%;
-            margin-top: 1rem;
-            border-collapse: separate; 
-            border-spacing: 0;
-        }
-        .table th, .table td {
-            padding: 1rem 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #374151; /* Gray 700 */
-            transition: background-color 0.2s;
-        }
-        .table th {
-            background-color: #374151; /* Gray 700 */
-            color: #9ca3af; /* Gray 400 */
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-        }
-        .table tbody tr:last-child td {
-            border-bottom: none;
-        }
-        .table tr:hover {
-            background-color: #374151; /* Gray 700 */
-        }
-        /* Style for the K-Means analysis text block */
-        .analysis-block {
-            white-space: pre-wrap;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-        }
+        td { padding: 14px; border-bottom: 1px solid #334155; font-size: 13px; color: #e2e8f0; }
+        tr:hover { background-color: rgba(255,255,255,0.03); }
+        
+        .badge-high { color: #10b981; font-weight: bold; background: rgba(16, 185, 129, 0.15); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .badge-medium { color: #f59e0b; font-weight: bold; background: rgba(245, 158, 11, 0.15); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.2); }
+        .badge-low { color: #ef4444; font-weight: bold; background: rgba(239, 68, 68, 0.15); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.2); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
     </style>
 </head>
-<body class="p-4 md:p-10 min-h-screen">
-
+<body class="p-6 md:p-10">
     <div class="max-w-7xl mx-auto">
         
-        <!-- Header Global -->
         <header class="mb-10">
-            <h1 class="text-4xl font-extrabold text-teal-400 mb-2 tracking-tight">Dashboard Analisis Penjualan HP Global</h1>
-            <p class="text-gray-400">Menampilkan metrik performa model (Akurasi & K-Means) dan ringkasan data produk terlaris di seluruh pasar.</p>
+            <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
+                Clasification popularitas Hp di Ghana Afrika Menggunakan Model Rando Forest dan Navie Bayes
+            </h1>
+            <p class="text-slate-400 mt-2 text-lg">Menganalisis performa klasifikasi antara Random Forest vs Naive Bayes</p>
         </header>
 
-        {% if not global_analysis %}
-            <!-- Pesan Error/Data Kurang -->
-            <div class="card p-10 text-center">
-                 <p class="text-xl font-semibold text-red-400">Data tidak tersedia atau terlalu sedikit.</p>
-                 <p class="text-gray-400 mt-2">Status: {{ info_data_check }}</p>
-            </div>
-        {% else %}
-            <!-- HASIL ANALISIS GLOBAL -->
-            <h2 class="text-3xl font-bold text-amber-400 mb-8 tracking-tight">Metrik Model dan Rekomendasi Utama</h2>
-            <p class="text-gray-400 text-sm italic mb-6">Status Data: {{ info_data_check }}</p>
-
-            <!-- BARIS METRIK UTAMA (Akurasi, Prediksi, Silhouette Score) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                
-                <!-- Card 1: Akurasi LR -->
-                <div class="card p-6 flex flex-col justify-center items-start">
-                    <p class="text-sm font-medium text-gray-400">Akurasi Model Regresi Global (R2 Score)</p>
-                    <h3 class="text-5xl font-extrabold text-green-400 mt-2">
-                        {{ "%.2f"|format(akurasi_lr) }}%
-                    </h3>
+        <!-- Bagian Perbandingan Metrik AI -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <!-- Metrik Random Forest -->
+            <div class="card p-6 border-t-4 border-blue-500 shadow-xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-blue-400">Random Forest (RF)</h3>
+                    <span class="text-[10px] bg-blue-500/20 px-2 py-1 rounded text-blue-300 font-bold uppercase tracking-wider">Metode Ensemble</span>
                 </div>
-
-                <!-- Card 2: Produk Paling Diminati & Prediksi Harga -->
-                <div class="card p-6 flex flex-col justify-center items-start">
-                    <p class="text-sm font-medium text-gray-400">Produk Paling Diminati (Global Market):</p>
-                    <h3 class="text-xl font-semibold text-white mt-1 mb-2">
-                        {{ produk_terpopuler_terpilih }}
-                    </h3>
-                    <p class="text-sm font-medium text-gray-400">Prediksi Harga Ideal (Model Global):</p>
-                    <h4 class="text-2xl font-extrabold text-amber-400">
-                        Rp{{ "%.0f"|format(prediksi)|replace(",", "_")|replace(".", ",")|replace("_", ".") }}
-                    </h4>
-                </div>
-
-                <!-- Card 3: Silhouette Score -->
-                <div class="card p-6 flex flex-col justify-center items-start">
-                    <p class="text-sm font-medium text-gray-400">Kualitas Klaster Harga (Silhouette Score)</p>
-                    <h3 class="text-5xl font-extrabold text-blue-400 mt-2">
-                        {{ "%.3f"|format(silhouette_score_val) }}
-                    </h3>
-                    <p class="text-sm text-gray-500 mt-2">
-                        (Semakin dekat ke 1, semakin baik segmentasi pasar)
-                    </p>
-                </div>
-            </div>
-
-            <!-- CARD VISUALISASI DAN ANALISIS K-MEANS -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-                
-                <!-- Klasterisasi dan Elbow Plot (2 kolom) -->
-                <div class="lg:col-span-2 card p-8">
-                    <h3 class="text-2xl font-semibold text-teal-400 mb-4">Analisis Segmentasi Harga (K-Means)</h3>
-                    <div class="flex flex-col md:flex-row gap-8">
-                        <!-- Ringkasan Klaster -->
-                        <div class="md:w-1/2">
-                            <h4 class="text-lg font-medium text-gray-300 mb-3 border-b border-gray-700 pb-1">Ringkasan Klaster Harga Global:</h4>
-                            <pre class="analysis-block text-gray-300 text-sm p-3 bg-gray-700/50 rounded-lg border border-gray-600">{{ cluster_analysis }}</pre>
-                        </div>
-                        
-                        <!-- Plot Elbow -->
-                        {% if elbow_img_base64 %}
-                            <div class="md:w-1/2 flex justify-center items-center p-2 rounded-lg bg-gray-700/50 relative">
-                                <img src="data:image/png;base64,{{ elbow_img_base64 }}" alt="Elbow Method Plot" class="w-full h-auto rounded-lg">
-                                <p class="text-xs text-gray-500 absolute bottom-1 right-2 left-2 text-center">Metode Elbow untuk menentukan jumlah klaster optimal (K)</p>
-                            </div>
-                        {% endif %}
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-900/50 p-4 rounded-xl text-center border border-white/5">
+                        <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Accuracy</p>
+                        <p class="text-2xl font-black text-white">{{ results.rf.Accuracy }}</p>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-xl text-center border border-white/5">
+                        <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">F1-Score</p>
+                        <p class="text-2xl font-black text-white">{{ results.rf.F1 }}</p>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-xl text-center border border-white/5">
+                        <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Precision</p>
+                        <p class="text-2xl font-black text-white">{{ results.rf.Precision }}</p>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-xl text-center border border-white/5">
+                        <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Recall</p>
+                        <p class="text-2xl font-black text-white">{{ results.rf.Recall }}</p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Grafik Popularitas Pembeli (1 kolom) -->
-                <div class="card p-6 flex flex-col justify-center items-center">
-                    <h3 class="text-2xl font-semibold text-white mb-4">Grafik Top 10 Popularitas Merk</h3>
-                    {% if img_base64 %}
-                        <img src="data:image/png;base64,{{ img_base64 }}" alt="Grafik Popularitas Merk Global" class="w-full h-auto rounded-lg">
-                    {% else %}
-                        <p class="text-red-400">Gagal memuat grafik popularitas merk.</p>
-                    {% endif %}
+            <!-- Metrik Naive Bayes -->
+            <div class="card p-6 border-t-4 border-teal-500 shadow-xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-teal-400">Naive Bayes (NB)</h3>
+                    <span class="text-[10px] bg-teal-500/20 px-2 py-1 rounded text-teal-300 font-bold uppercase tracking-wider">Metode Probabilistik</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-900/50 p-4 rounded-xl text-center border border-white/5">
+                        <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Accuracy</p>
+                        <p class="text-2xl font-black text-white">{{ results.nb.Accuracy }}</p>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-xl text-center border border-white/5">
+                        <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">F1-Score</p>
+                        <p class="text-2xl font-black text-white">{{ results.nb.F1 }}</p>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-xl text-center border border-white/5">
+                        <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Precision</p>
+                        <p class="text-2xl font-black text-white">{{ results.nb.Precision }}</p>
+                    </div>
+                    <div class="bg-slate-900/50 p-4 rounded-xl text-center border border-white/5">
+                        <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Recall</p>
+                        <p class="text-2xl font-black text-white">{{ results.nb.Recall }}</p>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <!-- TABEL DETAIL PRODUK DAN NAMA PENGGUNA -->
-            <div class="card p-8 overflow-x-auto">
-                <h3 class="text-2xl font-semibold text-teal-400 mb-6">Tabel Detail Data HP, Harga, dan Nama Pembeli</h3>
-                {% if table_html %}
-                    {{ table_html|safe }}
-                {% else %}
-                    <p class="text-gray-400">Tabel detail tidak tersedia.</p>
-                {% endif %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+            <!-- Informasi Brand Populer -->
+            <div class="lg:col-span-1 card p-8 flex flex-col justify-center bg-gradient-to-br from-slate-800 to-slate-900 shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>
+                <p class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">Market Leader</p>
+                <h2 class="text-slate-500 text-sm mb-1 uppercase font-bold">Brand Terbanyak:</h2>
+                <h3 class="text-5xl font-black text-white mb-4 tracking-tight">{{ results.top_brand }}</h3>
+                <div class="h-1.5 w-24 bg-gradient-to-r from-blue-500 to-teal-400 rounded-full mb-6"></div>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Berdasarkan dataset <span class="text-white font-bold">{{ results.total_rows }}</span> data, <span class="text-white font-bold">{{ results.top_brand }}</span> memimpin dengan <span class="text-white font-bold">{{ results.top_count }}</span> varian model. Hal ini menempatkan brand ini pada kategori popularitas <span class="text-emerald-400 font-bold">High</span> secara otomatis.
+                </p>
             </div>
-        {% endif %}
 
+            <!-- Grafik Popularitas -->
+            <div class="lg:col-span-2 card p-6 shadow-xl">
+                <h4 class="text-sm font-bold mb-6 uppercase text-slate-400 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Statistik Sebaran Seluruh Brand (Nokia, Infinix, dll.)
+                </h4>
+                <div class="rounded-xl overflow-hidden bg-slate-900/80 p-4 border border-white/5">
+                    <img src="data:image/png;base64,{{ graph }}" class="w-full" alt="Grafik Popularitas">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabel Detail -->
+        <div class="card p-8 shadow-2xl border-b-8 border-blue-900">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div>
+                    <h4 class="text-2xl font-black text-white">Ringkasan Klasifikasi Seluruh Brand</h4>
+                    <p class="text-sm text-slate-500 mt-1">Daftar unik setiap brand yang ditemukan dalam dataset (Scroll untuk melihat Nokia, Infinix, dll.)</p>
+                </div>
+                <div class="flex gap-3">
+                    <div class="bg-blue-500/10 text-blue-400 px-4 py-2 rounded-xl text-xs font-bold border border-blue-500/20">
+                        {{ results.total_brands }} Total Brand Unik
+                    </div>
+                    <div class="bg-slate-700/50 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold border border-white/10">
+                        {{ results.total_rows }} Baris Data Model
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                {{ table|safe }}
+            </div>
+            
+            <div class="mt-6 flex flex-wrap items-center gap-6 text-[10px] text-slate-400 uppercase font-bold tracking-widest bg-slate-900/30 p-4 rounded-xl border border-white/5">
+                <span class="flex items-center gap-2"><span class="w-3 h-3 bg-emerald-500 rounded-sm"></span> High Popularity (Top 30%)</span>
+                <span class="flex items-center gap-2"><span class="w-3 h-3 bg-amber-500 rounded-sm"></span> Medium Popularity (Mid 40%)</span>
+                <span class="flex items-center gap-2"><span class="w-3 h-3 bg-red-500 rounded-sm"></span> Low Popularity (Bottom 30%)</span>
+            </div>
+        </div>
     </div>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Styling badge secara otomatis pada kolom kategori popularitas
+            const rows = document.querySelectorAll('table tbody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length > 0) {
+                    const statusCell = cells[cells.length - 1]; // Mengambil cell terakhir (Kategori)
+                    const text = statusCell.innerText.trim();
+                    
+                    if(text === 'High') {
+                        statusCell.innerHTML = '<span class="badge-high">High</span>';
+                    } else if(text === 'Medium') {
+                        statusCell.innerHTML = '<span class="badge-medium">Medium</span>';
+                    } else if(text === 'Low') {
+                        statusCell.innerHTML = '<span class="badge-low">Low</span>';
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
